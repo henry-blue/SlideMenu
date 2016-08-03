@@ -25,16 +25,18 @@
             android:background="#aa9911"
             android:orientation="horizontal">
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="60dp"
                 android:layout_height="match_parent"
+                android:gravity="center"
                 android:text="标记"
                 android:textSize="18sp"
                 android:textColor="#ffffff"
                 android:background="#727272"/>
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="60dp"
                 android:layout_height="match_parent"
                 android:text="删除"
+                android:gravity="center"
                 android:textSize="18sp"
                 android:textColor="#ffffff"
                 android:background="#880000"/>

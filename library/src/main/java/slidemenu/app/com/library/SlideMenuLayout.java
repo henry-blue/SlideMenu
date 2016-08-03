@@ -1,11 +1,16 @@
 package slidemenu.app.com.library;
 
 import android.content.Context;
+import android.graphics.Rect;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.ViewDragHelper;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 
 public class SlideMenuLayout extends FrameLayout {
@@ -13,6 +18,22 @@ public class SlideMenuLayout extends FrameLayout {
     private ViewDragHelper mViewDragHelper;
     private ViewGroup mforegroundView;
     private ViewGroup mbackgroundView;
+    private int mHeight;
+    private int mWidth;
+    private int mRange;
+    private OnSlideMenuStatusListener mListener;
+
+    public static enum Status {
+        Open, Close, Draging
+    }
+
+    public interface OnSlideMenuStatusListener {
+        void OnStartOpenMenu();
+        void OnOpenMenu();
+        void OnStartCloseMenu();
+        void OnCloseMenu();
+        void OnSlidingMenu();
+    }
 
     public SlideMenuLayout(Context context) {
         this(context, null);
@@ -32,6 +53,33 @@ public class SlideMenuLayout extends FrameLayout {
     }
 
     @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        setLayout(false);
+        bringChildToFront(mforegroundView);
+    }
+
+    private void setLayout(boolean isOpen) {
+        Rect frontRect = computeFrontViewRect(isOpen);
+        mforegroundView.layout(frontRect.left, frontRect.top, frontRect.right, frontRect.bottom);
+        Rect backRect = computeBackViewViaFront(frontRect);
+        mbackgroundView.layout(backRect.left, backRect.top, backRect.right, backRect.bottom);
+    }
+
+    private Rect computeFrontViewRect(boolean isOpen) {
+        int left = 0;
+        if (isOpen) {
+            left = -mRange;
+        }
+        return new Rect(left, 0, left + mWidth, mHeight);
+    }
+
+    private Rect computeBackViewViaFront(Rect frontRect) {
+        int left = frontRect.right;
+        return new Rect(left, 0, left + mRange, mHeight);
+    }
+
+    @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
         if(getChildCount() < 2){
@@ -42,19 +90,120 @@ public class SlideMenuLayout extends FrameLayout {
         }
         mforegroundView = (ViewGroup) getChildAt(0);
         mbackgroundView = (ViewGroup) getChildAt(1);
-        bringChildToFront(mforegroundView);
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        mHeight = mforegroundView.getMeasuredHeight();
+        mWidth = mforegroundView.getMeasuredWidth();
+        mRange = mbackgroundView.getMeasuredWidth();
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        return mViewDragHelper.shouldInterceptTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        try {
+            mViewDragHelper.processTouchEvent(event);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    public void SetOnSlideMenuStatusListener(OnSlideMenuStatusListener listener) {
+        mListener = listener;
+    }
+
+    public void openMenu(boolean isSmooth) {
+        int finalLeft = -mRange;
+        if (isSmooth) {
+            if (mViewDragHelper.smoothSlideViewTo(mforegroundView, finalLeft, 0)) {
+                ViewCompat.postInvalidateOnAnimation(this);
+            }
+        } else {
+            setLayout(true);
+        }
+    }
+
+    public void closeMenu(boolean isSmooth) {
+        int finalLeft = 0;
+        if (isSmooth) {
+            if (mViewDragHelper.smoothSlideViewTo(mforegroundView, finalLeft, 0)) {
+                ViewCompat.postInvalidateOnAnimation(this);
+            }
+        } else {
+            setLayout(false);
+        }
+    }
+
+    @Override
+    public void computeScroll() {
+        super.computeScroll();
+        if (mViewDragHelper.continueSettling(true)) {
+            ViewCompat.postInvalidateOnAnimation(this);
+        }
+    }
+
+    private void openMenu() {
+        openMenu(true);
+    }
+
+    private void closeMenu() {
+        closeMenu(true);
     }
 
     private class SlideCallback extends ViewDragHelper.Callback {
 
         @Override
         public boolean tryCaptureView(View child, int pointerId) {
-            return false;
+            return true;
+        }
+
+        @Override
+        public int clampViewPositionHorizontal(View child, int left, int dx) {
+            int clampRange = left;
+            if (child == mforegroundView) {
+                if (left > 0) {
+                    clampRange = 0;
+                } else if (left < -mRange) {
+                    clampRange = -mRange;
+                }
+            } else if (child == mbackgroundView) {
+                if (left > mWidth) {
+                    clampRange = mWidth;
+                } else if (left < mWidth - mRange) {
+                    clampRange = mWidth - mRange;
+                }
+            }
+            return clampRange;
+        }
+
+        @Override
+        public void onViewPositionChanged(View changedView, int left, int top, int dx, int dy) {
+            if (changedView == mforegroundView) {
+                mbackgroundView.offsetLeftAndRight(dx);
+            } else if (changedView == mbackgroundView) {
+                mforegroundView.offsetLeftAndRight(dx);
+            }
+
+            invalidate();
+        }
+
+        @Override
+        public void onViewReleased(View releasedChild, float xvel, float yvel) {
+            if (xvel == 0 && mforegroundView.getLeft() < -mRange / 2.0f) {
+                openMenu();
+            } else if (xvel < 0) {
+                openMenu();
+            } else {
+                closeMenu();
+            }
         }
     }
+
 }
