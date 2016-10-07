@@ -22,6 +22,7 @@ public class SlideMenuLayout extends FrameLayout {
     private int mWidth;
     private int mRange;
     private OnSlideMenuStatusListener mListener;
+    private Status mStatus;
 
     public static enum Status {
         Open, Close, Draging
@@ -29,9 +30,9 @@ public class SlideMenuLayout extends FrameLayout {
 
     public interface OnSlideMenuStatusListener {
         void OnStartOpenMenu();
-        void OnOpenMenu();
+        void OnOpenedMenu();
         void OnStartCloseMenu();
-        void OnCloseMenu();
+        void OnClosedMenu();
         void OnSlidingMenu();
     }
 
@@ -49,6 +50,7 @@ public class SlideMenuLayout extends FrameLayout {
     }
 
     private void initView() {
+        mStatus = Status.Close;
         mViewDragHelper = ViewDragHelper.create(SlideMenuLayout.this, new SlideCallback());
     }
 
@@ -113,6 +115,38 @@ public class SlideMenuLayout extends FrameLayout {
             e.printStackTrace();
         }
         return true;
+    }
+
+    protected void dispatchSwipeEvent() {
+        if (mListener != null) {
+            mListener.OnSlidingMenu();
+        }
+
+        Status lastStatus = mStatus;
+        mStatus = updateStatus();
+        if (lastStatus != mStatus && mListener != null) {
+            if (mStatus == Status.Close) {
+                mListener.OnClosedMenu();
+            } else if (mStatus == Status.Open) {
+                mListener.OnOpenedMenu();
+            } else if (mStatus == Status.Draging) {
+                if (lastStatus == Status.Close) {
+                    mListener.OnStartOpenMenu();
+                } else if (lastStatus == Status.Open) {
+                    mListener.OnStartCloseMenu();
+                }
+            }
+        }
+    }
+
+    private Status updateStatus() {
+        int left = mforegroundView.getLeft();
+        if (left == 0) {
+            return Status.Close;
+        } else if (left == -mRange) {
+            return Status.Open;
+        }
+        return Status.Draging;
     }
 
     public void SetOnSlideMenuStatusListener(OnSlideMenuStatusListener listener) {
@@ -190,7 +224,7 @@ public class SlideMenuLayout extends FrameLayout {
             } else if (changedView == mbackgroundView) {
                 mforegroundView.offsetLeftAndRight(dx);
             }
-
+            dispatchSwipeEvent();
             invalidate();
         }
 

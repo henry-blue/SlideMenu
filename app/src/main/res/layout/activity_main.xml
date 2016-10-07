@@ -5,41 +5,8 @@
     android:layout_height="match_parent"
     tools:context="com.app.slidemenu.MainActivity">
 
-    <slidemenu.app.com.library.SlideMenuLayout
+    <ListView
+        android:id="@+id/list_id"
         android:layout_width="match_parent"
-        android:layout_height="60dp">
-        <LinearLayout
-            android:background="@color/colorPrimary"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent" />
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:background="#aa9911"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="60dp"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="标记"
-                android:textSize="18sp"
-                android:textColor="#ffffff"
-                android:background="#727272"/>
-            <TextView
-                android:layout_width="60dp"
-                android:layout_height="match_parent"
-                android:text="删除"
-                android:gravity="center"
-                android:textSize="18sp"
-                android:textColor="#ffffff"
-                android:background="#880000"/>
-        </LinearLayout>
-    </slidemenu.app.com.library.SlideMenuLayout>
+        android:layout_height="match_parent" />
 </RelativeLayout>
