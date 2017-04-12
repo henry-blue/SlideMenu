@@ -1,8 +1,9 @@
 # SlideMenu
 Sliding menu custom view. Project for 4.0+ version
-##ScreenShot
+## ScreenShot
 ![](https://github.com/henry-blue/SlideMenu/raw/master/screenShot.gif)
-##Using
+
+## Using
 First you can add gradle dependency with command :
 ```groovy
   repositories {
